@@ -1,0 +1,692 @@
+every js function creates a execution context in the call stack and the base execution context is global execution context, which provides 
+Global Object(window in browser) and this
+passing empty file to browser will create the global execution context
+this === window
+we can add functions, variables to this window
+we create a creation phase in js engine, then comes 2nd phase where we run our code
+to execute js code, it creates global execution context in js runtime and for each functions again it creates indivial execution context
+
+lexical means at compile time where is the code written
+every execution context creates a new lexical scope, it tells which lexical environment is running, checks the position placement within that execution context
+first lexical environment is the global lexical environment where we write the code
+
+creation phase consistes of hoisting - behaviour of moving the function andvariable declaration to the top of the environment
+js engine allocating memory for variables and functions in creation phase, during creation phase js engine will look through the code
+variables are partially hoisted whereas functions are fully hoisted
+js engine looks for var and function to get it hoisted 
+
+var test = 'test1'
+(function testing(){console.log()}) // can't hoist it
+let/const don't get hoisted
+physically it doesnt move the code up, after initial lookup it just allocated memory in memory heap
+
+console.log('1------')
+console.log(teddy)
+console.log(sing())
+console.log(sing2())// sing2() sing2 is not a function //sing2 undefined
+var teddy = 'bear'
+//function expression
+var sing2 = function(){}
+//function declaration
+function sing(){}
+hoisting happens on every execution context
+
+//Arguments - affects js engine optimize
+looks like an array but it's not an array
+
+function marry(person1, person2){ // function marry(...args) //rest operator // solution
+    console.log('arguments',arguments); //arguments {0: 'Tim', 1: 'Tina'} // not an array // we can't iterate
+    console.log(Array.from(arguments)); //['Tim', 'Tina'] // solution
+    return ${person1} - ${person2} //return ${args[0]} - ${args[1]}
+}
+marry('Tim', 'Tina')
+on each execution context we get arguments
+function india(){
+    console.log(arguments) //{}
+}
+
+//variable environment
+function two(){
+    var valid; //undefined
+}
+function one(){
+    var valid = true;//local environment
+    two();
+}
+var valid = false;
+one();
+
+execution scope
+//two() -- undefined
+//one() -- true
+//global() -- false one() two()
+
+//scope chain - access to variables in parent 
+//global lexical environmenet - scope is chained to global scope
+//functional lexical environment - linked to parents function
+
+function sayMyName(){
+    var a = 'a';
+    return function findName(){ 
+        var b = 'b';
+        return function printName(){
+            var c = 'c';
+            return 'test'
+        }
+    }
+}
+sayMyName()()()
+global scope is the outermost scope and they can be access by any other scope
+
+eval() , with is having scope issues, change how scope works 
+lexical environment === [[scope]]
+function a(){}
+console -> f a()
+[[Scopes]] -> Scopes[1] -> Global{type: 'global', name: '', object: Window} 
+
+leakage of global variables
+//'use strict'
+function weird(){
+    height = 50;
+    return height
+}
+weird()
+
+var heyhey = function doodle(){
+    doodle()// only accessible here
+    return 'heyhey'
+}
+heyhey() //heyhey
+doodle() //ReferenceError: doodle is not defined // doodle is enclosed in its own scope // doodle gets added to its own execution context
+
+//function scope
+function a(){}
+//block scope
+if(5>4){var secret = '12345'} //secret will be accessible for normal js as it is functionally scoped, but by making it let/const it will be block scoped
+
+function loop(){
+    for(var i = 0; i < 5; i++){
+        console.log(i)
+    }
+    console.log(i) // ReferenceError if we use let instead of var
+}
+
+in normal html file all script will be bunched to a single execution context and it overrides with the last one
+
+IIFE - used to resolve global variable issue - Immediately invoked function expression - common design pattern - used by jquery, backbone
+library code is in local scope, it's a function expression
+(function(){
+    var a = 1;
+})();
+//same
+(function(){
+    var a = 1;
+}());
+function(){}() //SyntaxError
+window.$ and window.jQuery - exposes $/jQuery object to us
+
+var script1 = (function(OMG){OMG('h1').click()})(jQuery) // benefit it doesnt have to go to global scope to search for jQuery, it's
+local now OMG
+
+//this - is the object that the function is the property of
+obj.someFunc(this) - this refers to the obj
+'use strict' - used to avoid the common mistakes that could happen
+//'use strict'
+function b(){
+    //'use strict'
+    console.log(this)
+}
+every execution context introduces this, arguments
+
+const obj = {
+    name: 'Billy',
+    sing: function(){
+        return 'hey ' + this.name
+    },
+    singAgain(){
+        return this.sing() + '!'
+    }
+}
+obj.sing()
+
+
+const a = function(){
+    console.log(this)
+    const b = function(){
+        console.log(this)
+        const c = {
+            hi: function(){ 
+            console.log(this)
+        }}
+        c.hi()
+    }
+    b()
+}
+window.a()
+window.a(b())
+a - window
+b - window
+c - {hi:f}
+
+const obj = {
+    name: 'Billy',
+    sing(){
+        console.log('a',this);
+        //var self = this;
+        var anotherFunc = function(){ // () => {
+            console.log('b', this)
+        }
+        anotherFunc() // return anotherFunc.bind(this) // obj.sing()()
+    }
+}
+obj.sing()
+a - {name: 'Billy', sing: f}
+b - window
+//this is not lexically scoped - that's the problem - it's dynamically scoped
+to solve the issue use arrow function which is lexically bound
+
+- to manipulate the this keyword, we have 3 important methods - call() apply() bind()
+a() - shorthand of a.call() - all function when created have this function - underneath - call is used, apply() also same case - a.apply()
+
+const wizard = {
+    name: 'Merlin',
+    health: 50,
+    heal(){
+        return this.health = 100;
+    }
+}
+const archer = {
+    name: 'Robin',
+    health: 30
+}
+console.log('1', archer); // {name: 'Robin', health: 30}
+wizard.heal.call(archer); // wizard.heal.call(archer, 30, 50); wizard.heal.apply(archer, [30, 50]); // wizard.heal.bind(archer, 30, 50); will not work, it will return a function
+
+const healArcher = wizard.heal.bind(archer, 30, 50);
+healArcher()
+
+console.log('2', archer); // {name: 'Robin', health: 100}
+
+- call, apply immediately runs a function, bind returns a new function, usually used when we want a function to be called later on
+call, apply is generally used to borrow methods from an object while bind is useful to call functions later with certain context
+
+//function currying // partially passing parameters
+function multiply(a, b){
+    return a*b
+}
+let multiplyByTwo = multiply.bind(this, 2)
+multiplyByTwo(4)
+
+scope is function based and context is more about in object based(how function is invoked with the value of 'this'), scope is the visibility of variables
+
+//Types
+typeof 5 // number // primitive type
+typeof true // boolean // primitive type
+typeof 'test' // string // primitive type
+typeof undefined // undefined // absence of definition // primitive type
+typeof null // object // absence of value // primitive type
+typeof Symbol('test') // symbol // primitive type
+typeof {} // object // non-primitive type
+
+---------
+
+typeof [] // object // non-primitive type
+typeof function(){} // function // it is an object // non-primitive type
+
+primitive type means represent a single value
+non-primitive type doesn't contain actual value, instead it has reference
+
+array and function are objects
+
+function a(){
+    return 5;
+}
+a.hi = 'hihihi'
+console.log(a.hi) //hihihi
+
+javascript built-in standard objects - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+
+everything in javascript is object
+primitive type have object wrapper
+
+true.toString() // 'true' // Boolean(true).toString() // why dot // to use the methods it silently add the wrapper 
+typeof Math // object
+typeof Infinity // number
+
+var array = ['1', '2', '3']
+var array = {
+    0: '1',
+    1: '2',
+    2: '3'
+}
+// check if the variable of 'object' is an array or object
+Array.isArray([1, 2, 3]) // true
+Array.isArray({}) // false
+
+pass by reference and pass by value
+primitive type are pass by value, can't be changed and has no reference to each other
+var a = 5;
+var b = a;
+b++;
+a // 5
+b // 6
+
+let obj1 = {name: 'aaa', password: '123'} // points to same memory space
+let obj2 = obj1;
+obj2.password = '456'
+obj1 // {name: 'aaa', password: '456'}
+obj2 // {name: 'aaa', password: '456'}
+
+//copy // shallow clone
+var c = [1, 2, 3, 4, 5]
+var d = [].concat(c)
+
+var obj = {a: 'a', b: 'b'}
+let clone = Object.assign({}, obj)
+let clone2 = {...obj}
+
+var obj = {a: 'a', b: {deep: 'ccc'}}
+let clone = Object.assign({}, obj)
+let clone2 = {...obj}
+obj.b.deep = 'ddd'
+obj // {a: 'a', b: {deep: 'ddd'}}
+clone // {a: 'a', b: {deep: 'ddd'}}
+clone2 // {a: 'a', b: {deep: 'ddd'}}
+//deep copy
+let superclone = JSON.parse(JSON.stringify(obj)) // performance issue if the object is too deep
+
+//type coercion different type of operand on the other sides of operator to convert, it happens when we use == not ===
+1 == '1' // true // 1 == 1
+if(1){
+    console.log(5)
+}
+
+//https://dorey.github.io/JavaScript-Equality-Table/
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
+https://www.ecma-international.org/ecma-262/5.1/#sec-11.9.3
+
+-0 === +0 // true // Object.is(-0, +0) // false // Object.is works almost same as === except few cases
+NaN === NaN // false // Object.is // true
+
+const four = new Function('num', 'return num') // Function Constructor
+four(4)
+
+function is a special type of object which is a callable object, it has name property(optional , anonymous for function expression), it has some methods(call, apply, bind)
+object don't have these properties
+
+functions are first class citizens in JS
+// can be assigned to variables // var stuff = function(){}
+// function can be pass as parameter
+function a(fn){
+    fn()
+}
+a(function(){console.log('hi there')})
+// function can return another function
+function b(){
+    return function c(){
+        console.log('bye')
+    }
+}
+b()()
+functions are data not only do perform action
+
+function a(){
+    return param; //ReferenceError
+}
+a()
+
+Higher Order functions
+//function returns a function or function accepts a function as parameter
+
+//closures
+function a(){
+    let grandpa = 'grandpa'
+    return function b(){
+        let father = 'father'
+        let random = 6767877878
+        return function c(){
+            let son = 'son'
+            return `${grandpa} > ${father} > ${son}`
+        }
+    }
+}
+a()()()
+functions that return functions + lexical scope
+after a popped off grandpa is supposed to be garbage collected but as it is referenced by c, it will be kept in a closure box in memory,
+same for father, but random will be garbage collected as it has no reference, c will look for it in memory rather than searching for it in 
+lexical scope
+
+function boo(string){
+    return function(name){
+        return function(name2){
+            console.log(`${string} ${name} ${name2}`)
+        }
+    }
+}
+
+function callMeMay(){
+    const callMe = 'Hiiii'
+    setTimeout(function(){
+        console.log(callMe)
+    }, 4000)
+    //const callMe = 'Hiiii' // it will work even if it is not hoisted // it doesn't matter where it is placed
+}
+
+closures - benefits --> memory efficient // encapsulation
+//memory efficient / create once and access repeatedly
+function heavyDuty2(){
+    const bigArray = new Array(7000).fill('AAA') // created everytime if we access it repeatedly and also garbage collected
+    console.log('created') // only once
+    return function(index){
+        return bigArray[index]
+    }
+}
+const getDuty = heavyDuty2()
+getDuty(500)
+getDuty(700)
+getDuty(900)
+
+//encapsulation
+- hidding of information that is unnecessary to outside world and manipulate it
+- principle of least privileage - idea - security principle
+
+const makeNuclearButton = () => {
+  let timeWithoutDestruction = 0;
+  const passTime = () => timeWithoutDestruction++;
+  const totalPeaceTime = () => timeWithoutDestruction;
+  const launch = () => {
+    timeWithoutDestruction = -1;
+    return '💥';
+  }
+
+  setInterval(passTime, 1000);
+  return {
+      launch // hidden // encapsulated
+      totalPeaceTime
+      }
+}
+
+const ww3 = makeNuclearButton();
+ww3.totalPeaceTime()
+
+
+JS uses prototypal inheritance
+const array = [] // created from Array [] constructor
+array.__proto__ // to access prototypal inheritance // to go up to prototype chain to access Array[]
+array.__proto__.__proto__ // to access the base Object {}
+//array can access toString() of object as Object is the descendant of array
+array.toString()
+
+function a(){}
+a.__proto__ // f(){[native code]} // store as global variable to see
+a.__proto__.__proto__ // to access the base Object {}
+
+const obj1 = {}
+obj1.__proto__ // to access the base Object {}
+
+let dragon = {
+  name: 'Tanya',
+  fire: true,
+  fight() {
+    return 5
+  },
+  sing() {
+    if (this.fire) {
+      return `I am ${this.name}, the breather of fire`
+    }
+  }
+}
+
+let lizard = {
+  name: 'Kiki',
+  fight() {
+    return 1
+  }
+}
+
+lizard.__proto__ = dragon; // Don't do this, bad performance. Show with bind.
+for(let prop in lizard){ //name fight fire sing
+    console.log(prop)
+    //if(lizard.hasOwnPrperty(prop)) //name fight
+        console.log(prop)
+}
+
+dragon.__proto__ // base Object
+dragon.isPrototypeOf(lizard); // true
+lizard.isPrototypeOf(dragon); // false
+console.log(lizard.fire)
+console.log(lizard.sing())
+const lizardFire =dragon.sing.bind(lizard) // inefficient if we have to borrow bunch of methods
+console.log(lizardFire())
+lizard.dance() // TypeError: lizard.dance is not a function
+
+prototypal chaining is different from scope chaining
+
+lizard.aaa // undefined
+lizard.aaa() // Typeerror
+obj.__proto__.__proto__ // null // null pointer
+
+const obj = {name: 'test'}
+obj.hasOwnPrperty('name') // true
+function a(){}
+a.hasOwnPrperty('call') // false
+a.hasOwnPrperty('apply') // false
+a.hasOwnPrperty('bind') // false
+a.hasOwnPrperty('name') // true
+a.name // 'a'
+
+__proto__ -> prototype: {...}
+multiplyBy5.__proto__ === Function.prototype // f(){[native code]}
+Object.prototype // {...}
+prototype also includes __proto__ along with other properties
+
+const array = []
+[].hasOwnPrperty('map') // false
+array.hasOwnPrperty('map') // false
+array.__proto__.hasOwnPrperty('map') // true
+array.__proto__ === Array.Prototype
+
+Object.create can be used to create prototype chain
+let human = {
+    mortal: true
+}
+let socrates = Object.create(human)
+socrates.age = 45
+human.isPrototypeOf(socrates) // true
+
+//only functions have the prototype property
+
+function a(){} // a.prototype // we don't use it // it is empty
+a.__proto__ === Function.prototype
+
+typeof Object // function // it has prototype property // built-in objects // with capital letters // Object constructor creates the object wrapper
+every function have prototype property and it refernces to an object used to attach properties that will be inherited by objects further down the prototype chain
+
+Object.prototype is the base object after thatt is null
+const obj = {}
+obj.prototype // undefined
+const arr = []
+arr.prototype // undefined
+'string'.prototype // undefined
+String.prototype // {...}
+
+new Date().lastYear() // lastYear() doesn't exist
+Date.prototype.lastYear = function(){
+    return this.getFullYear() - 1;
+}
+
+Array.prototype.map = function(){ //just created a new one // issue it overridden the actual one in project
+    let arr = [];
+    for(let i = 0; i < this.length; i++){
+        arr.push(this[i] + 'AAA')
+    }
+    return arr;
+}
+
+//factory functions
+function createElf(name, weapon){
+    return {
+        name: name,
+        weapon: weapon,
+        attack(){
+            return 'attack with ' + weapon
+        }
+    }
+}
+const peter = createElf('peter', 'stones')
+peter.attack()
+// drawback it will keep the copy of generic attack function for each elf
+
+const elfFunctions = {
+    attack(){
+        return 'attack with ' + this.weapon
+    }
+}
+function createElf(name, weapon){
+    return {
+        name,
+        weapon
+    }
+}
+const peter = createElf('peter', 'stones')
+peter.attack = elfFunctions.attack
+peter.attack()
+
+Object.create creates a prototype chain between objects
+
+const elfFunctions = {
+  attack: function() {
+    return 'atack with ' + this.weapon
+  }
+}
+function createElf(name, weapon) {
+  //Object.create creates __proto__ link
+  let newElf = Object.create(elfFunctions) // newElf // {} // newElf.__proto__ // {attack: [Function]} // true prototypal inhertance
+  newElf.name = name;
+  newElf.weapon = weapon
+  return newElf
+}
+const sam = createElf('Sam', 'bow');
+const peter = createElf('Peter', 'bow');
+sam.attack()
+
+constructor functions
+function Elf(name, weapon){
+    console.log(this); // Elf{}
+    this.name = name;
+    this.weapon = weapon;
+    var a = 5; // not added to Elf object // 'this' is the only way to add properties in constructor function 
+    console.log(this); // Elf{name: 'Sarah', weapon: 'firework'}
+}
+Elf.prototype.attack = function(){
+    return 'attack with ' + this.weapon
+}
+console.log(Elf.prototype) // Elf {}
+Elf.prototype.attack = () => { // undefined as arrow operator is lexically scoped, this points to global object, lexical means the place where it is written, function is dynamically scoped
+    return 'attack with ' + this.weapon
+}
+Elf.prototype.build = function(){
+    const self = this;
+    function building(){
+        return this.name + ' builds a house' // 'this' will assigned to 'window' object
+    }
+    return building.bind(this)
+    //return building()
+}
+
+const peter = new Elf('Peter', 'fire') // new returns the whole object constructor for us //Number(), Function(), Object() all are constructor function // can be invoked by new keyword // try to start constructor function by capital letter
+peter.name; // new ask this to point to peter, in new execution context // every function has prototype
+peter.__proto__ // Elf{attack: Function} // on commenting attack Elf {}
+peter.prototype // undefined as peter is an object and only functions have prototype
+
+const sam = elf('Sam', 'fire')
+sam.name // TypeError: Cannot read property 'name' of undefined
+
+const Elf1 = new Function('name', 'weapon', `this.name = name; this.weapon = weapon`)
+const sarah = new Elf1('Sarah', 'firework')
+sarah // {name: 'Sarah', weapon: 'firework'}
+
+Object.create // created to overcome the above idea
+
+var a = new Number(5)
+typeof a // object
+var b = 5
+typeof b //number
+a === b // false
+a == b // true
+b. // available all properties because internally it construct
+
+null and undefined don't have constructor function
+
+class Elf {
+    age = 3;
+    constructor(name, weapon){
+        this.name = name;
+        this.weapon = weapon;
+    }
+    attack(){
+        return 'attack with ' + this.weapon + this.age
+    }
+}
+const peter = new Elf('Peter', 'fire') // peter is the instance of Elf // nice error to use new if we miss it
+console.log(peter instanceof Elf) // true
+
+//class is syntactic sugar underneath it is using prototypal inheritance
+
+// new binding // using new with constructor
+// implicit binding // default one
+const person = {
+    name: 'test',
+    hi(){
+        console.log(this.name)
+    }
+}
+// explicit binding
+const person = {
+    name: 'test',
+    hi(){
+        console.log(this.setTimeout)
+    }.bind(window) // explicitly decide
+}
+
+// arrow function // lexical scoping
+const person = {
+    name: 'test',
+    hi(){
+        var inner = () => {
+            console.log(this.name)
+        }
+    }
+}
+
+//Inheritance
+class Elf {
+    constructor(name, weapon){
+        this.name = name;
+        this.weapon = weapon;
+    }
+    attack(){
+        return 'attack with ' + this.weapon
+    }
+}
+const peter = new Elf('Peter', 'fire')
+const ogre = {...fiona} // cloned the object but don't have the base class
+ogre // {name: 'Peter', weapon: 'fire'}
+fiona.__proto__ // Elf {}
+ogre.__proto__ // {}
+peter === ogre // false
+ogre.attack // TypeError
+
+class A extends Elf {
+    constructor(name, weapon, type){
+        super(name, weapon); // 'super' is used to call super class // this is necessary when we are extending and using this
+        this.type = type;
+    }
+}
+
+// instance is when we use the new keyword // true for super class also // in JS object inherit from object // no technical classes
+
+//Encapsulation // wrap code into boxes taht are realted to one another // they can interact with each other
+//Abstraction // simpler interfaces hidding the complexity // private variable
+//Inheritance // avoid rewrite same code // save memory space by having shared methods
+//Polymorphism // many form // ability to redefine the methods

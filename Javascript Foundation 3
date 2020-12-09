@@ -1,0 +1,218 @@
+Normal push, pop will manipulate the original array, but concat will create a copy and map will also not manipulate the original one
+
+function a(){ // not a pure function
+    console.log('hi') // console.log is window specific, we are using browser affecting the outside world that means impure function
+}
+
+Referential Transparency // not affecting the outside world
+function(num1, num2){
+    return num1 + num2;
+}
+function b(num){
+    return num * 2;
+}
+b(a(3, 4)) // 14
+
+Asynchronous Javascript
+
+Javascript is a single threaded language that can be non-blocking
+
+program -> allocate memory, parse and execute
+
+Memory Leak means unused memory(global unused variable)
+
+Single threaded means it has one call stack that means it can do only one thing at a time LIFO
+
+Deadlocks problem with multithreading
+
+sychronous means line by line execution
+
+//Promises
+A promise ia an object that may produce a single value some time in the future, either a resolved value or a reason that it;s not resolved(rejected)
+
+3 possible states -> fulfilled, rejected, pending
+
+before promise callback was there
+movePlayer(100, left, function(){
+    movePlayer(200, right, function(){
+        movePlayer(300, center, function(){})
+    })
+})
+
+el.addEventListener('click', submitForm)
+
+callback we can have nested and repeated callbacks very complex
+
+Promises are new in ES6
+
+movePlayer(100, left)
+    .then(() => movePlayer(200, right))
+    .then(() => movePlayer(300, center))
+
+const promise = new Promise((resolve, reject) => {
+    if(true){
+        resolve('stuff worked')
+    }else{
+        reject('error')
+    }
+})
+promise.then(result => result + '!')
+        .then(result2 => {
+            // throw Error
+            console.log(result2 + '?')
+        })
+        .catch(()=> console.log('')) // catch any error throughout the chain // should be put at the end else it can't able to catch the error for then after it
+        .then(result3 => {console.log(result3 + '!')})
+
+const promise2 = new Promise((resolve, reject) => {
+    setTimeout(resolve, 100, 'Hi')
+})
+
+const promise3 = new Promise((resolve, reject) => {
+    setTimeout(resolve, 1000, 'Hi')
+})
+
+const promise4 = new Promise((resolve, reject) => {
+    setTimeout(resolve, 3000, 'Hi')
+})
+
+Promise.all([promise, promise2, promise3, promise4]).then(values => {console.log(values)})
+
+Promise{<resolved>: "stuff worked"}
+
+const urls = [
+    'http;//www.facebook.com',
+    'http;//www.google.com',
+    'http;//www.apple.com'
+]
+
+Promise.all(urls.map(url => {
+    return fetch(url).then(resp => resp.json())
+})).then(results => {
+    console.log(results[0])
+    console.log(results[1])
+    console.log(results[2])
+}).catch(()=>console.log('error'))
+
+fetch() // it is a promise
+Async Await is part of ES8 and using promise only, make code look synchronous and has good readability, syntactic sugar of promise
+
+async function playerStart(){
+    await movePlayer(100, left);
+    await movePlayer(200, left);
+    await movePlayer(300, left);
+    await movePlayer(400, left);
+}
+
+await is used infront of function returning promise
+
+fetch() // promise
+
+fetch('url')
+    .then(resp => resp.json())
+    .then(console.log)
+
+initially pending then resolved
+
+async function fetchUsers(){
+    const resp = await fetch('url')
+    const data = await resp.json()
+    console.log(data)
+}
+fetchUsers()
+
+const urls = [
+    'url1',
+    'url2',
+    'url3'
+]
+
+Promise.all(urls.map(url=>
+    fetch(url).then(resp=>resp.json())
+)).then(array=>{
+    console.log(array[0])
+    console.log(array[1])
+    console.log(array[2])
+}).catch('oops');
+
+const getData = async function(){
+    try {
+        const [array1, array2, array3] = await Promise.all(urls.map(url=>
+            fetch(url).then(resp=>resp.json())
+        ))
+        console.log(array1)
+        console.log(array2)
+        console.log(array3)
+    } catch (err) {
+        console.log('oops')
+    }
+}
+
+//Error // native javascript constructor function
+new Error('oops') // not actually an error we have to throw the error
+//throw // code stops executing unless we handle throw
+throw new Error() // current function execution stops and the control goes to next function in stack
+
+throw 'string' // uncaught string
+throw true // uncaught true
+throw Error // uncaught f Error(){[native code]}
+
+const myError = new Error('oops')
+myError.name // 'Error'
+myError.message // 'oops'
+myError.stack // 'Error: oops at <anonymous>:1:17'
+
+function a(){
+    const b = new Error('what??')
+    return b;
+}
+a()
+"Error: what??
+    at a (<anonymous>:2:12)
+    at <anonymous>:1:1"
+
+new SyntaxError
+SyntaxError
+    at <anonymous>:1:1
+(,
+// Uncaught SyntaxError: Unexpected token
+
+new ReferenceError
+ReferenceError
+    at <anonymous>:1:1
+something
+// Uncaught ReferenceError: something is not defined
+    at <anonymous>:1:1
+
+whenever there is error, it goes down the call stack to check if there is catch, then it goes to js runtime which executes onerror()
+in nodejs, it is process.on('uncaughtException')
+
+function fail(){
+    try {
+        console.log('this works');
+        throw new Error('oops');
+        //console.log('this works'); // never work it will go to catch block
+    } catch () {     // if we comment catch // SyntaxError: Missing catch or finally clause
+        console.log(error);
+    } finally {      // always work
+        console.log('still good');
+        return 'returning fail'
+    }
+    console.log('!!!!!!!'); // never executes as it goes to finally return
+}
+fail()
+
+try catch generally used for handling synchronous errors, can be used as nested
+
+try catch doesn't work with async code
+try {
+    setTimeout(function(){
+        fakevariable;
+    }, 1000)
+} catch (e) {
+    console.log('got it', e) // never throw error // return 1
+}
+
+Async Error Handling
+.catch()
+
